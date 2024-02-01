@@ -44,13 +44,15 @@ for i, chunk in enumerate(chunks):
         # Synchronous single-shot recognition for simplicity
         result = speech_recognizer.recognize_once()
         if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-            transcriptions.append(result.text)
-            print(f"Chunk {i+1} transcribed.")
+            # Adding line breaks for readability; assuming sentence ends can be marked by periods.
+            formatted_transcription = result.text.replace(". ", ".\n")
+            transcriptions.append(formatted_transcription)
+            print(f"Chunk {i+1} transcribed: {formatted_transcription[:50]}...")  # Preview of transcription
         else:
             print(f"Chunk {i+1} could not be transcribed: {result.reason}")
 
-# Combine transcriptions into a single string
-transcription = ' '.join(transcriptions)
+# Combine transcriptions into a single string with additional line breaks for readability
+transcription = '\n'.join(transcriptions)
 
 # Output file for the transcription
 output_file = "./transcription/transcription.txt"
