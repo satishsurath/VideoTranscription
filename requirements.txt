@@ -1,0 +1,2 @@
+moviepy
+azure-cognitiveservices-speech
