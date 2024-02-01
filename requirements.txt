@@ -1,3 +1,4 @@
 moviepy
 azure-cognitiveservices-speech
 python-dotenv
+pydub

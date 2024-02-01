@@ -1,64 +1,58 @@
 import azure.cognitiveservices.speech as speechsdk
+from pydub import AudioSegment
 import time
 from dotenv import load_dotenv
 import os
+import tempfile
 
 # Load environment variables
 load_dotenv()
 print("Environment variables loaded.")
 
-# Set up the Azure Speech configuration with variables from .env file
+# Set up the Azure Speech configuration
 speech_key = os.getenv("SPEECH_KEY")
 service_region = os.getenv("SERVICE_REGION")
-
-# Ensure keys are loaded properly
 if not speech_key or not service_region:
     raise ValueError("Azure Speech service credentials not found in .env file")
 print("Azure Speech service configuration set up with provided credentials.")
 
 speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
 
-# Set the audio file path
-audio_file = "./audio/YOURMOVIE_FILE.wav"
-print(f"Audio file set to {audio_file}.")
+# Path to the original audio file
+audio_file_path = "./audio/YOURMOVIE_FILE.wav"
+print(f"Processing audio file: {audio_file_path}")
 
-# Set up the audio configuration
-audio_config = speechsdk.audio.AudioConfig(filename=audio_file)
-print("Audio configuration set up.")
+# Load and chunk the audio file into 10-minute segments
+audio = AudioSegment.from_wav(audio_file_path)
+chunk_length_ms = 600000  # 10 minutes in milliseconds
+chunks = [audio[i:i + chunk_length_ms] for i in range(0, len(audio), chunk_length_ms)]
 
-# Create a speech recognizer object
-speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
-print("Speech recognizer object created.")
-
-# Create an empty list to store the transcription results
 transcriptions = []
 
-# Define an event handler for continuous recognition
-def continuous_recognition_handler(evt):
-    print(f"Processing transcription: {evt.result.text}")
-    if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
-        transcriptions.append(evt.result.text)
+for i, chunk in enumerate(chunks):
+    # Use a temporary file to avoid saving many large files
+    with tempfile.NamedTemporaryFile(delete=True, suffix='.wav') as temp_file:
+        chunk.export(temp_file.name, format="wav")
+        print(f"Processing chunk {i+1}/{len(chunks)}")
 
-# Start continuous recognition
-speech_recognizer.recognized.connect(continuous_recognition_handler)
-print("Starting continuous recognition...")
-speech_recognizer.start_continuous_recognition()
+        # Set up the audio configuration for this chunk
+        audio_config = speechsdk.audio.AudioConfig(filename=temp_file.name)
 
-# Wait for the recognition to complete
-timeout_seconds = 600  # Set a timeout value (in seconds) based on your audio file length
-timeout_expiration = time.time() + timeout_seconds
+        # Create a speech recognizer for the chunk
+        speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
 
-while time.time() < timeout_expiration:
-    time.sleep(1)  # Adjust the sleep duration as needed
-
-# Stop continuous recognition
-speech_recognizer.stop_continuous_recognition()
-print("Continuous recognition stopped.")
+        # Synchronous single-shot recognition for simplicity
+        result = speech_recognizer.recognize_once()
+        if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+            transcriptions.append(result.text)
+            print(f"Chunk {i+1} transcribed.")
+        else:
+            print(f"Chunk {i+1} could not be transcribed: {result.reason}")
 
 # Combine transcriptions into a single string
 transcription = ' '.join(transcriptions)
 
-# Write the transcription to a file
+# Output file for the transcription
 output_file = "./transcription/transcription.txt"
 with open(output_file, "w") as file:
     file.write(transcription)
