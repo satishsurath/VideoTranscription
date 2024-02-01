@@ -2,7 +2,7 @@ from moviepy.editor import *
 
 video_file = "./video/yourmovie.mp4"
 
-output_file = "./audio/YOURMOVIE FILE.wav"
+output_file = "./audio/YOURMOVIE_FILE.wav"
 
  
 
@@ -12,11 +12,6 @@ video = VideoFileClip(video_file)
 
  
 
-#extract the audio from the video
-
-audio = video.audio
-
- 
 
 # Set the desired audio parameters
 
@@ -33,3 +28,13 @@ audio_params = {
     "bitrate": "16k"  # Set the desired bitrate
 
 }
+
+
+#extract the audio from the video
+
+audio = video.audio
+
+
+# Write the audio to a file
+audio.write_audiofile(output_file, codec='pcm_s16le', fps=16000, bitrate='16k')
+ 
