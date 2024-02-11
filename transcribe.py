@@ -19,7 +19,7 @@ print("Azure Speech service configuration set up with provided credentials.")
 speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
 
 # Set the audio file path
-audio_file = "./audio/YOURMOVIE_FILE.wav"
+audio_file = "./audio/YOURAUDIO_FILE.wav"
 print(f"Audio file set to {audio_file}.")
 
 # Set up the audio configuration
@@ -45,7 +45,7 @@ print("Starting continuous recognition...")
 speech_recognizer.start_continuous_recognition()
 
 # Wait for the recognition to complete
-timeout_seconds = 6000  # Set a timeout value (in seconds) based on your audio file length
+timeout_seconds = 700  # Set a timeout value (in seconds) based on your audio file length
 timeout_expiration = time.time() + timeout_seconds
 
 while time.time() < timeout_expiration:
@@ -59,7 +59,7 @@ print("Continuous recognition stopped.")
 transcription = ' '.join(transcriptions)
 
 # Write the transcription to a file
-output_file = "./transcription/transcription.txt"
+output_file = "./transcription/transcription_meeting.txt"
 with open(output_file, "w") as file:
     file.write(transcription)
 
